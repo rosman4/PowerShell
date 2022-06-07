@@ -15,8 +15,10 @@ foreach($server in $ServerList){
 $ServerName = $Server.ServerName
 $LastStatus = $Server.ServerName
 $DownSince = $ServerDownSince  
-   $Connection = Test-Connection $Server.servername -Count 1
+$LastDownAlert = $Server.LastDownAlertTime
 
+   $Connection = Test-Connection $Server.servername -Count 1
+    $DateTime = Get-Date
     
     if($ConnectionStatus -eq "Success"){
         if($LastStatus -ne "Success"){
@@ -29,13 +31,17 @@ $DownSince = $ServerDownSince
    
      if($LastStatus -eq "Success"){
         Write-Output "$ServerName is Now Offline"
+        $Server.DownSince = $DateTime
+        $Server.LastDownAlertTime = $DateTime
       }else{
         Write-Output "$ServerName is Still Offline"
       }
    }
 
-#last status check    
-    $LastConnectionStatus = $ConnectionStatus
+ #last status check and automatically add date and time to every entry to stay up to date
+    $Server.LastStatus = $Connection.Status
+    $Server.LastCheckTime = $DateTime
+
     [void]$Export.Add($server)
 
 }
@@ -43,5 +49,3 @@ $DownSince = $ServerDownSince
 
 #Comparing server/s last status to current status
 $Export | Export-Csv -Path $ServerListFilePath -Delimiter ',' -NoTypeInformation
-
- 
