@@ -1,51 +1,58 @@
-#reference enviroment cheker list
-$ServerListFilePath = "C:\Users\Administrator\Documents\PowerShell\EnvCheckerServerList.csv"
+$ServerListFilePath = "C:\Scripts\EnvCheckerList.csv"
 
-$server = $ServerList
+
 
 #import the csv file path containing server/s
 $ServerList = Import-Csv -Path $ServerListFilePath -Delimiter ',' 
 
+$ServerList.
+
 #Empty Array list
 $Export = [System.Collections.ArrayList]@()
 
-
+Process{
 #Checking server connection status
 foreach($server in $ServerList){
 $ServerName = $Server.ServerName
-$LastStatus = $Server.ServerName
-$DownSince = $ServerDownSince  
+$LastStatus = $Server.LastStatus
+$DownSince = $Server.DownSince  
 $LastDownAlert = $Server.LastDownAlertTime
 
+#Testing Server Connection
    $Connection = Test-Connection $Server.servername -Count 1
-    $DateTime = Get-Date
-    
-    if($ConnectionStatus -eq "Success"){
-        if($LastStatus -ne "Success"){
+       $DateTime = Get-Date
+           
+        if($ConnectionStatus -eq "Success"){
+           if($LastStatus -ne "Success"){
         Write-Output "$ServerName is Now Online"
      }else{
         Write-Output "$ServerName is Still Online"
-     }
-   
-   }else{
-   
-     if($LastStatus -eq "Success"){
+          }
+                                                    
+     }else{
+                                                          
+         if($LastStatus -eq "Success"){
         Write-Output "$ServerName is Now Offline"
-        $Server.DownSince = $DateTime
-        $Server.LastDownAlertTime = $DateTime
-      }else{
+          $Server.DownSince = $DateTime
+          $Server.LastDownAlertTime = $DateTime
+     }else{
         Write-Output "$ServerName is Still Offline"
-      }
-   }
+          
+          }
+     }
+     }
+  
+#last status check and automatically add date and time to every entry to stay up to date
 
- #last status check and automatically add date and time to every entry to stay up to date
-    $Server.LastStatus = $Connection.Status
-    $Server.LastCheckTime = $DateTime
+$Server.lastStatus = $Connection.Status
+$Server.LastCheckTime = $DateTime
+[void]$Export.Add($server)
 
-    [void]$Export.Add($server)
-
-}
+ }
 
 
 #Comparing server/s last status to current status
-$Export | Export-Csv -Path $ServerListFilePath -Delimiter ',' -NoTypeInformation
+ $Export | Export-Csv -Path $ServerListFilePath -Delimiter ',' -NoTypeInformation
+
+ Test-Connection lon-dc1 | Select-Object -Property statuscode
+
