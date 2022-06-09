@@ -1,67 +1,53 @@
-# Import Active Directory module
-Import-Module ActiveDirectory
- 
-# Open file dialog
-# Load Windows Forms
-[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
- 
-# Create and show open file dialog
-$dialog = New-Object System.Windows.Forms.OpenFileDialog
-$dialog.InitialDirectory = $StartDir
-$dialog.Filter = "CSV (*.csv)| *.csv" 
-$dialog.ShowDialog() | Out-Null
- 
-# Get file path
-$CSVFile = $dialog.FileName
- 
-# Import file into variable
-# Lets make sure the file path was valid
-# If the file path is not valid, then exit the script
-if ([System.IO.File]::Exists($CSVFile)) {
-    Write-Host "Importing CSV..."
-    $CSV = Import-Csv -LiteralPath "$CSVFile"
-} else {
-    Write-Host "File path specified was not valid"
-    Exit
-}
- 
-# iterate over each line in the CSV file
-foreach($user in $CSV) {
- 
-    # Password
-    $SecurePassword = ConvertTo-SecureString "$($user.'First Name'[0])$($user.'Last Name')$($user.'Employee ID')!@#" -AsPlainText -Force
- 
-    # Format their username
-    $Username = "$($user.'First Name').$($user.'Last Name')"
-    $Username = $Username.Replace(" ", "")
- 
-    # Create new user
-    New-ADUser -Name "$($user.'First Name') $($user.'Last Name')" `
-                -GivenName $user.'First Name' `
-                -Surname $user.'Last Name' `
-                -UserPrincipalName $Username `
-                -SamAccountName $Username `
-                -EmailAddress $user.'Email Address' `
-                -Description $user.Description `
-                -OfficePhone $user.'Office Phone' `
-                -Path "$($user.'Organizational Unit')" `
-                -ChangePasswordAtLogon $true `
-                -AccountPassword $SecurePassword `
-                -Enabled $([System.Convert]::ToBoolean($user.Enabled))
- 
-    # Write to host that a new user is created
-    Write-Host "Created $Username / $($user.'Email Address')"
- 
-    # If groups is not null... then iterate over groups (if any were specified) and add user to groups
-    if ($User.'Add Groups (csv)' -ne "") {
-        $User.'Add Groups (csv)'.Split(",") | ForEach {
-            Add-ADGroupMember -Identity $_ -Members "$($user.'First Name').$($user.'Last Name')"
-            WriteHost "Added $Username to $_ group" # Log to console
-        }
+#Chris Mcghee chrs.mcghee@gmail.com 3-27-2020
+#Store the data from ADUsers.csv in the $ADUsers array
+TRY {
+    $ADUsers = Import-csv D:\Bulkusers\bulk_users1.csv
     }
- 
-    # Write to host that we created the user
-    Write-Host "Created user $Username with groups $($User.'Add Groups (csv)')"
-}
- 
-Read-Host -Prompt "Script complete... Press enter to exit."
+CATCH [System.IO.DirectoryNotFoundException]
+    {Write-Host " You fat fingered the directory"
+    }
+CATCH [System.IO.FileNotFoundException]
+        {Write-Host " The filename is wrong you Mollusk"
+        }
+
+$error[0].Exception.GetType().FullName
+
+#Loop through each row containing user details in the CSV file 
+foreach ($User in $ADUsers)
+{
+	#Read user data from each field in each row and assign the data to a variable as below
+	[string]$DisplayName = $user.firstname + " " + $User.Lastname
+    [string]$UPN = $User.Firstname + "." + $User.Lastname + "@" + $User.Maildomain	
+	[string]$Username 	= $User.username
+	[string]$Password 	= $User.password
+	[string]$Firstname 	= $User.firstname
+	[string]$Lastname 	= $User.lastname
+	[string]$OU 		= $User.ou
+    [string]$email      = $User.email
+    [string]$streetaddress = $User.streetaddress
+    [string]$city       = $User.city
+    [string]$zipcode    = $User.zipcode
+    [string]$state      = $User.state
+    [string]$country    = $User.countrycode
+    [string]$telephone  = $User.telephone
+    [string]$jobtitle   = $User.jobtitle
+    [string]$company    = $User.company
+    [string]$department = $User.department
+   
+
+    #Check to see if the user already exists in AD
+	if (Get-ADUser -Filter {SamAccountName -eq $Username})
+	{
+		 #If user does exist, give a warning and keep on going
+		 Write-Warning "A user account with username $Username already exist in Active Directory."
+	}
+	else
+	{
+		#User does not exist then proceed to create the new user account
+		
+        #Account will be created in the OU provided by the $OU variable read from the CSV file
+		New-ADUser -Name:$DisplayName  -SamAccountName:$Username -UserPrincipalName:$UPN -GivenName:$Firstname -Surname:$Lastname -Enabled:$True -DisplayName:$DisplayName  -Path:$OU -City:$city -Company:$company -PostalCode:$zipcode -Country:$country -State $state -StreetAddress $streetaddress -OfficePhone $telephone  -EmailAddress:$email -Title:$jobtitle  -Department:$department -AccountPassword:(convertto-securestring $Password -AsPlainText -Force) -ChangePasswordAtLogon:$True            
+	}
+        
+} 
+
