@@ -12,5 +12,5 @@ Else {$status = 'Offline'
 New-Object -TypeName PSobject -Property @{
     'Server' = $_
     'Status' = $status
-    }
+   }
 }  | Export-csv C:\test.csv -NoTypeInformation
