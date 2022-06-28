@@ -47,5 +47,5 @@ foreach ($User in $ADUsers)
         #Account will be created in the OU provided by the $OU variable read from the CSV file
 		New-ADUser -Name:$DisplayName  -SamAccountName:$Username -UserPrincipalName:$UPN -GivenName:$Firstname -Surname:$Lastname -Enabled:$True -DisplayName:$DisplayName  -Path:$OU -City:$city -Company:$company -PostalCode:$zipcode -Country:$country -State $state -StreetAddress $streetaddress -OfficePhone $telephone  -EmailAddress:$email -Title:$jobtitle  -Department:$department -AccountPassword:(convertto-securestring $Password -AsPlainText -Force) -ChangePasswordAtLogon:$True            
 	}
-        }
+          }
 
