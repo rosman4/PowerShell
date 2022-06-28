@@ -21,7 +21,7 @@ foreach ($update in $updates) {
 #install the update
     Start-Process -Wait wusa -ArgumentList "/update $UpdateFilePath","/quiet","norestart"
 
-}
+ }
 
 #create no hotfix list
 Get-HotFix > "$updatespath\new_hotfix_list.txt"
